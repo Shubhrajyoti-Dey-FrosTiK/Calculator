@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import java.sql.Types.NULL
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,6 +33,8 @@ class MainActivity : AppCompatActivity() {
         val division: Button= findViewById(R.id.division)
         val res: Button = findViewById(R.id.result)
         val clear: Button = findViewById(R.id.clear)
+        val openBracket: Button = findViewById(R.id.open_bracket)
+        val closeBracket: Button = findViewById(R.id.close_bracket)
 
         one.setOnClickListener {
             s = s + "1"
@@ -108,16 +111,39 @@ class MainActivity : AppCompatActivity() {
             num = 0
             textShown.text = s
         }
+        openBracket.setOnClickListener {
+            s = s + "("
+            textShown.text = s
+        }
+        closeBracket.setOnClickListener {
+            s = s + ")"
+            textShown.text = s
+        }
         res.setOnClickListener {
+
+            var ModifiedString = ""
+
 
              if(IntegerStore.isNotEmpty())
              {
                  IntegerStore.add(num.toDouble())
 //                 if(indicator>0){IntegerStore.removeAt(0)}
 
-                 Calculate(s, IntegerStore, textShown)
-//                 textShown.text = IntegerStore.toString()
+//                 ModifiedString=s
+//                 if(s[0]!='('){
+                     ModifiedString="("+s+")"
+//                 }
+
+
+
+//                 var value = Calculate(s, IntegerStore, textShown)
+
+                 Operation(ModifiedString, IntegerStore, textShown)
+
+//                 textShown.text = value[0].toString()
+//                 textShown.text=ModifiedString
 //                 s = IntegerStore[0].toString()
+
                  s=""
                  num = 0
                  IntegerStore.clear()
@@ -134,11 +160,108 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun Calculate(s: String, integerStore: MutableList<Double>, textShown: TextView) {
+    private fun Operation(st: String, iS: MutableList<Double>, textShown: TextView){
+//TODO        The main functionality of this function is to calculate the parts in the brackets
+
+        var brackets=1
+        var s=st
+        var integerStore=iS
+//
+        while(brackets!=0)
+        {
+            var start=-1
+            var end=-1
+            var OperatorCount=0
+            var startOperatorCount=-1
+            var endOperatorCount=-1
+            for(i in 0..s.length-1)
+            {
+                if(s[i]=='+'){
+                    OperatorCount++
+                }
+                if(s[i]=='-'){
+                    OperatorCount++
+                }
+                if(s[i]=='x'){
+                    OperatorCount++
+                }
+                if(s[i]=='/'){
+                    OperatorCount++
+                }
+
+                if(s[i]==')')
+                {
+                    endOperatorCount=OperatorCount
+                    end=i
+                    break
+                }
+                if(s[i]=='(')
+                {
+                    startOperatorCount=OperatorCount
+                    start=i
+                }
+            }
+            if(start==-1)
+            {
+                if(end==-1)
+                {
+                    brackets=0
+                    textShown.text=s
+                }
+                else{
+                    brackets=2
+                    textShown.text = "Invalid bracket sequence"
+                }
+
+                break
+            }
+            else
+            {
+                var newString = s.substring(start+1, end )
+
+                var newIntegerStore = mutableListOf<Double>()
+                for(i in startOperatorCount..endOperatorCount)
+                {
+                    newIntegerStore.add(integerStore[i])
+                }
 
 
+                var result = Calculate(newString,newIntegerStore,textShown)
+
+
+                if(result.size > 1){
+                    brackets=2
+                    break
+                }
+                else{
+                    for(i in startOperatorCount..endOperatorCount-1)
+                    {
+                        integerStore.removeAt(i)
+                    }
+                    integerStore[startOperatorCount]=result[0]
+                    var s1=s.substring(0,start)
+                    var s2=s.substring(end+1,s.length)
+                    var s3=result[0].toInt().toString()
+                    s=s1+s3+s2
+                    textShown.text=s
+                }
+//                textShown.text=result.size.toString()
+            }
+        }
+        if(brackets==0){
+            textShown.text=integerStore[0].toString()
+//            textShown.text=s
+        }
+
+    }
+
+
+    private fun Calculate(s: String, iS: MutableList<Double>, textShown: TextView): MutableList<Double> {
+
+
+        var integerStore=iS
         var OperationStore = mutableListOf<Char>()
-        var result=0
+        
 
         for(i in 0..s.length-1)
         {
@@ -153,9 +276,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         var flag=1
-        if(OperationStore.size == integerStore.size-1){
-            flag=2
-        }
+//        if(OperationStore.size == integerStore.size-1){
+//            flag=2
+//        }
 
 
         while(flag==1) {
@@ -168,7 +291,7 @@ class MainActivity : AppCompatActivity() {
                         break
                     }
                     var product = integerStore[i] / integerStore[i + 1]
-                    textShown.text = "DONE FINE"
+//                    textShown.text = "DONE FINE"
                     OperationStore.removeAt(i)
                     integerStore.removeAt(i + 1)
                     integerStore.set(i, product)
@@ -183,7 +306,7 @@ class MainActivity : AppCompatActivity() {
             for (i in 0..OperationStore.size - 1) {
                 if (OperationStore[i] == '*') {
                     var product = integerStore[i] * integerStore[i + 1]
-                    textShown.text = "DONE FINE"
+//                    textShown.text = "DONE FINE"
                     OperationStore.removeAt(i)
                     integerStore.removeAt(i + 1)
                     integerStore.set(i, product)
@@ -220,8 +343,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        if(flag!=2) {
-            textShown.text = integerStore[0].toString()
-        }
+//        if(flag!=2){
+//            textShown.text=integerStore[0].toString()
+//        }
+        return integerStore
     }
+
 }
